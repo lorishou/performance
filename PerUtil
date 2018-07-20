@@ -1,8 +1,13 @@
+
+使用说明：
+1.尽量结对使用
+2.不能嵌套使用，否则会有问题
+
 public class TimeRecordUtil {
     private static final ThreadLocal<Long> START_TIME = new ThreadLocal<>();
 
     /**
-     * 开始调用
+     * （第一步调用）开始调用
      */
     public static void startInvoke() {
         START_TIME.remove();
@@ -10,7 +15,7 @@ public class TimeRecordUtil {
     }
 
     /**
-     * 调用结束
+     * （第二步调用）调用结束
      *
      * @return
      */
