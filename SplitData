@@ -1,0 +1,30 @@
+  public class DataUtil{
+      /**
+     * 此方法用来对数据按照一定块大小进行切分，适合需要将数据先进行切分再进行依次处理的场景
+     * 参数：
+     * 1.waitToSplitData：待切分数据
+     * 2.需要切分的块大小
+     * 返回：
+     * 数据切分后存储的List
+     *
+     * @param waitToSplitData
+     * @param everyBlockSize
+     * @param <T>
+     * @return
+     */
+      public static <T> List<List<T>> splitData(List<T> waitToSplitData, int everyBlockSize) {
+            int count = waitToSplitData.size();
+            List<List<T>> splitedGroup = Lists.newArrayList();
+
+            for (int index = 0; index < count; index = index + everyBlockSize) {
+                if (count < everyBlockSize) {
+                    splitedGroup.add(waitToSplitData.subList(index, count));
+                } else if (index + everyBlockSize < count) {
+                    splitedGroup.add(waitToSplitData.subList(index, index + everyBlockSize));
+                } else {
+                    splitedGroup.add(waitToSplitData.subList(index, count));
+                }
+            }
+            return splitedGroup;
+        }
+  }
