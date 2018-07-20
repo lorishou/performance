@@ -1,0 +1,22 @@
+public class PerUtil {
+    private static final ThreadLocal<Long> START_TIME = new ThreadLocal<>();
+
+    /**
+     * 开始调用
+     */
+    public static void startInvoke() {
+        START_TIME.remove();
+        START_TIME.set(System.currentTimeMillis());
+    }
+
+    /**
+     * 调用结束
+     *
+     * @return
+     */
+    public static long invokeDuration() {
+        long duration = System.currentTimeMillis() - START_TIME.get();
+        START_TIME.remove();
+        return duration;
+    }
+}
