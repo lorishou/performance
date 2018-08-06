@@ -1,0 +1,59 @@
+使用shell脚本单次提交git
+
+#!/bin/bash
+git status
+ 
+read -r -p "是否继续提交? [Y/n] " input
+ 
+case $input in
+    [yY][eE][sS]|[yY])
+		echo "继续提交"
+		git add -A
+		git commit -m $1
+		git push origin $2
+		;;
+ 
+    [nN][oO]|[nN])
+		echo "中断提交"
+		exit 1
+       		;;
+ 
+    *)
+	echo "输入错误"
+	exit 1
+	;;
+esac
+
+实际操作的时候命令行输入：./gitcommit.sh  commitMesage  branchName就可以了
+
+
+使用shell脚本循环提交git
+#!/bin/bash
+
+git status
+
+while true;
+do
+	read -r -p "是否继续提交? [Y/n] " input
+
+	case $input in
+	    [yY][eE][sS]|[yY])
+			echo "继续提交"
+			git add -A
+			git commit -m $1
+			git push origin $2
+                        exit 1
+			;;
+
+	    [nN][oO]|[nN])
+			echo "中断提交"
+			exit 1
+	       		;;
+
+	    *)
+		echo "输入错误，请重新输入"
+		;;
+	esac
+done
+
+实际操作的时候命令行输入：./gitcommit.sh  commitMesage  branchName就可以了
