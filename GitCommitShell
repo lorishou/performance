@@ -1,4 +1,4 @@
-使用shell脚本单次提交git
+1. 使用shell脚本单次提交git
 
 #!/bin/bash
 git status
@@ -27,7 +27,7 @@ esac
 实际操作的时候命令行输入：./gitcommit.sh  commitMesage  branchName就可以了
 
 
-使用shell脚本循环提交git
+2. 使用shell脚本循环提交git
 #!/bin/bash
 
 git status
@@ -57,3 +57,41 @@ do
 done
 
 实际操作的时候命令行输入：./gitcommit.sh  commitMesage  branchName就可以了
+
+
+3. 也可以以交互式的方式进行提交：
+#!/bin/bash
+git status
+ 
+read -p "确认待提交文件,是否继续提交? [Y/n] " input
+
+read -p "请输入提交说明:" commitMessage
+if  [ ! -n "$commitMessage" ] ;then
+     echo "未输入提交说明"
+     exit 1
+fi
+
+read  -p "请输入目标分支:" targetBranch
+if  [ ! -n "$targetBranch" ] ;then
+     echo "未输入目标分支"
+     exit 1
+fi
+
+case $input in
+    [yY][eE][sS]|[yY])
+		echo "继续提交"
+		git add -A
+		git commit -m $commitMessage
+		git push origin $targetBranch
+		;;
+ 
+    [nN][oO]|[nN])
+		echo "中断提交"
+		exit 1
+       		;;
+ 
+    *)
+	echo "输入错误"
+	exit 1
+	;;
+esac
