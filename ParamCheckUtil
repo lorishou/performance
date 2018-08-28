@@ -1,0 +1,112 @@
+package annotations;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.List;
+
+/**
+ * 参数校验工具使用说明：
+ * 1.配合SingleParamNotNull，ListParamNotNull注解进行使用
+ * 2.可以对泛型参数进行级联校验（List<String> ,List<User>）
+ * 3.参数嵌套层级不可过深，最多三层，如果过深可能会有异常出现，如StackOverflow
+ * 4.父类参数校验不到
+ * 5.嵌套的泛型(List<List<String>>)不能校验
+ * @author zhuobing
+ * @since 2018/8/28
+ */
+public class ParamCheckUtil {
+    public static <T> void checkParams(T t) {
+        try {
+            if (t == null) {
+                throw new RuntimeException(t + "不能为空");
+            }
+
+            Field[] fields = t.getClass().getDeclaredFields();
+
+            if (fields != null && fields.length > 0) {
+                for (Field field : fields) {
+
+                    SingleParamNotNull singleParamNotNull = field.getAnnotation(SingleParamNotNull.class);
+                    if (singleParamNotNull != null) {
+                        field.setAccessible(true);
+                        checkSingleParam(field.get(t), field);
+                        field.setAccessible(false);
+                        continue;
+                    }
+
+                    ListParamNotNull listParamNotNull = field.getAnnotation(ListParamNotNull.class);
+                    if (listParamNotNull != null) {
+                        field.setAccessible(true);
+                        checkListParam(field.get(t), field);
+                        field.setAccessible(false);
+                    }
+
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    private static <T> void checkSingleParam(T t, Field field) {
+        try {
+            if (t == null) {
+                throw new RuntimeException(field.getDeclaringClass() + ":" + field.getName() + "不能为空");
+            }
+
+            //自定义类（不是java原生类）
+            if (!isJavaClass(t.getClass())) {
+                checkParams(t);
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    private static <T> void checkListParam(T t, Field field) {
+        try {
+            //list本身是否为空
+            if (t == null || ((List) t).size() == 0) {
+                throw new RuntimeException(field.getDeclaringClass().getName() + ":" + field.getName() + "不能为空");
+            }
+
+            if (field.getType() == List.class) {
+                // 如果是List类型，得到其Generic的类型
+                Type genericType = field.getGenericType();
+                if (genericType != null) {
+                    // 如果是泛型参数的类型
+                    if (genericType instanceof ParameterizedType) {
+                        ParameterizedType pt = (ParameterizedType) genericType;
+                        //得到泛型里的class类型对象
+                        Class<?> genericClazz = (Class<?>) pt.getActualTypeArguments()[0];
+                        //自定义类
+                        if (!isJavaClass(genericClazz)) {
+                            List innerObjs = ((List) t);
+
+                            for (Object object : innerObjs) {
+                                checkParams(object);
+                            }
+                        }
+
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+
+    /**
+     * 判断一个类是JAVA类型还是用户定义类型
+     *
+     * @param clz
+     * @return
+     */
+    public static boolean isJavaClass(Class<?> clz) {
+        return clz != null && clz.getClassLoader() == null;
+    }
+}
