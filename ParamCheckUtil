@@ -1,3 +1,44 @@
+注解类：
+
+
+package com.mhc.gw.sti.api.jd.util;
+
+import java.lang.annotation.*;
+
+/**
+ * 列表参数注解
+ * @author zhuobing
+ * @since 2018/8/27
+ */
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
+public @interface ListParamNotNull {
+}
+
+
+
+package com.mhc.gw.sti.api.jd.util;
+
+import java.lang.annotation.*;
+
+/**
+ * 单参数注解
+ * @author zhuobing
+ * @since 2018/8/27
+ */
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
+public @interface SingleParamNotNull {
+}
+
+
+
+
+校验类：
+
+
 package annotations;
 
 import java.lang.reflect.Field;
