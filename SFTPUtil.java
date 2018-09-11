@@ -205,3 +205,16 @@ public class SFTPUtil {
         return fileData;
     }
 }
+
+具体使用：
+    1.获取sftp服务器host、userName、port、password、privateKey
+    2.连接
+    byte[] passwordArray = StringUtils.isBlank(password) ? null : password.getBytes();
+    byte[] privateKeyArray = IOUtils.toByteArray(this.getClass().getResourceAsStream("/jd_test_id_rsa"));
+
+    SFTPUtil sftpUtil = new SFTPUtil(privateKeyArray, userName, passwordArray, host, port);
+    sftpUtil.login();
+    //todo
+   
+    3.释放链接
+     sftpUtil.logout();
