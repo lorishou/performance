@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by alex on 2018/9/12.
+ * 入参，图片url数组，返回压缩、拼装后的图片byte[]
  */
 public class ImageUtils {
 
