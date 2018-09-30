@@ -1,58 +1,105 @@
 package com.mhc.gwsti.utils;
 
+import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 入参，图片url数组，返回压缩、拼装后的图片byte[]
+ * Created by alex on 2018/9/12.
  */
+@Slf4j
 public class ImageUtils {
 
 
-    public static byte[] merge(List<String> srcs) throws IOException {
+    private BufferedImage uploadSingleImage(String url) {
+        BufferedImage image = null;
+        try {
+            image = Thumbnails.of(new URL(url))
+                    .outputQuality(1f)
+                    .width(1000)
+                    .asBufferedImage();
+        } catch (Exception e) {
+            log.error("ImageUtils.uploadSingleImage下载图片异常，当前下载图片url：{}，异常原因：{}", url, e.getMessage(), e);
+        }
+        return image;
+    }
 
+
+    public byte[] merge(List<String> srcs, int uploadRetryCount) throws Exception {
 
         List<BufferedImage> images = new ArrayList<>();
         Integer h = 0;
         Integer w = 0;
 
-        for (String src : srcs) {
+        //下载图片
+        String currentUrl = null;
+        try {
+            for (String src : srcs) {
+                currentUrl = src;
 
-            BufferedImage image = Thumbnails.of(new URL(src))
-                    .outputQuality(0.5f)
-                    .width(600)
-                    .asBufferedImage();
+                BufferedImage image = uploadSingleImage(src);
 
-            images.add(image);
+                int retryCounter = 0;
+                while (null == image) {
+                    Thread.sleep(100);
 
-            w = image.getWidth() < w ? w : image.getWidth();
-            h += image.getHeight();
+                    image = uploadSingleImage(src);
+                    if (image != null) {
+                        break;
+                    }
+
+                    //最多重试三次
+                    retryCounter++;
+                    if (image == null && retryCounter > uploadRetryCount) {
+                        log.error("ImageUtils下载图片重试拉取失败，当前下载图片url：{}", currentUrl);
+                        throw new RuntimeException(src + "重试失败");
+                    }
+                }
+
+
+                images.add(image);
+
+                w = image.getWidth() < w ? w : image.getWidth();
+                h += image.getHeight();
+            }
+        } catch (Exception e) {
+            log.error("ImageUtils下载图片异常，当前下载图片url：{}，异常原因：{}", currentUrl, e.getMessage(), e);
+            throw e;
         }
 
-        BufferedImage imageNew = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
-        Integer startHeight = 0;
-        for (BufferedImage image : images) {
+        //缓解磁盘压力
+        Thread.sleep(500);
 
-            int[] rgb = new int[w * image.getHeight()];
+        try {
+            //压缩图片
+            BufferedImage imageNew = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+            Integer startHeight = 0;
+            for (BufferedImage image : images) {
 
-            rgb = image.getRGB(0, 0, image.getWidth(), image.getHeight(), rgb, 0, image.getWidth());
+                int[] rgb = new int[w * image.getHeight()];
 
-            imageNew.setRGB(0, startHeight, w, image.getHeight(), rgb, 0, w);
+                rgb = image.getRGB(0, 0, image.getWidth(), image.getHeight(), rgb, 0, image.getWidth());
 
-            startHeight += image.getHeight();
+                imageNew.setRGB(0, startHeight, w, image.getHeight(), rgb, 0, w);
+
+                startHeight += image.getHeight();
+            }
+
+
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            ImageIO.write(imageNew, "jpeg", stream);// 写图片 ，输出到硬盘
+
+            return stream.toByteArray();
+        } catch (Exception e) {
+            log.error("ImageUtils压缩图片异常，异常原因：{}", e.getMessage(), e);
+            throw e;
         }
-
-
-        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        ImageIO.write(imageNew, "jpeg", stream);// 写图片 ，输出到硬盘
-
-        return stream.toByteArray();
     }
+
 }
